@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ci-cd-pipelines-devtalk
+description: A Helm chart for the CI/CD devtalk demo
+type: application
+version: 0.1.0
+appVersion: 1.16.0
