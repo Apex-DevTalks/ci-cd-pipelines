@@ -1,12 +1,9 @@
-name: Deployment - Development
+name: Deployment - Stage
 
 on:
-  workflow_run:
-    workflows: ["Continuous Integration"]
+  push:
     branches:
-      - main
-    types:
-      - completed
+      - release/*[0-9].*[0-9].*[0-9]
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
@@ -38,7 +35,7 @@ jobs:
 
       - name: Build Docker Image(s)
         run: |
-          docker build . -f Dockerfile.dev -t "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
+          docker build . -f Dockerfile.stage -t "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
 
       - name: Setup GCloud
         uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
@@ -57,12 +54,12 @@ jobs:
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
         with:
-          cluster_name: ${{ secrets.GKE_CLUSTER_DEV }}
+          cluster_name: ${{ secrets.GKE_CLUSTER_STAGE }}
           location: ${{ secrets.GKE_ZONE }}
           credentials: ${{ secrets.GKE_SA_KEY }}
 
       - name: Deploy the Docker image to the GKE clusted
         working-directory: ./k8s/ci-cd-pipelines-devtalk/helm
         run: |
-          helm upgrade --install --namespace ci-cd-pipelines-development  --create-namespace --wait -f ./values-dev.yaml \
+          helm upgrade --install --namespace ci-cd-pipelines-stage  --create-namespace --wait -f ./values-stage.yaml \
           --set deployment.image=gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }} ci-cd-pipelines-devtalk .

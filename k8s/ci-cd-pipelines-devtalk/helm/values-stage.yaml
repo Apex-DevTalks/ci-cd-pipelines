@@ -1,0 +1,11 @@
+deployment:
+  image: gcr.io/PROJECT_ID/IMAGE:TAG
+
+namespace: ci-cd-pipelines-stage
+name: ci-cd-pipelines-devtalk
+
+replicaCount: 1
+
+providers:
+  gke:
+    autopilot: true
