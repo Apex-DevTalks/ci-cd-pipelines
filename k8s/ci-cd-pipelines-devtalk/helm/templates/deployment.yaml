@@ -21,3 +21,10 @@ spec:
       - name: {{ .Values.name }}
         image: {{ .Values.deployment.image }}
         imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
