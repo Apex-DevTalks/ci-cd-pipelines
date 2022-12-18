@@ -9,6 +9,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   IMAGE: ci-cd-pipelines-devtalk
+  ENVIRONMENT: Development
 
 jobs:
   setup-build-publish-deploy:
