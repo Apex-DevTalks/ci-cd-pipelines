@@ -1,0 +1,65 @@
+Name: Deployment - Development
+
+on:
+  push:  
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  IMAGE: ci-cd-pipelines-devtalk
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
+
+      - name: Set Image Tag
+        id: set_image_tag
+        run: |
+          echo "::set-output name=image_tag::$(date +'%Y%m%d').${{ github.run_number }}_${{ github.sha }}"
+
+      - name: Build Docker Image(s)
+        run: |
+          docker build . -f Dockerfile.dev -t "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
+
+      - name: Register gcloud as a Docker credential helper
+        run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Publish
+        run: |-
+          docker push "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_DEV }}
+          location: ${{ secrets.GKE_ZONE }}
+          credentials: ${{ secrets.GKE_SA_KEY }}
+
+      - name: Deploy the Docker image to the GKE clusted
+        working-directory: ./k8s/ci-cd-pipelines-devtalk/helm
+        run: |
+          helm upgrade --install --namespace ci-cd-pipelines-development  --create-namespace --wait -f ./values-dev.yaml \
+          --set deployment.image=gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }} ci-cd-pipelines-devtalk .
