@@ -28,12 +28,6 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
-      - name: Setup GCloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          service_account_key: ${{ secrets.GKE_SA_KEY }}
-          project_id: ${{ secrets.GKE_PROJECT }}
-
       - name: Set Image Tag
         id: set_image_tag
         run: |
@@ -42,6 +36,12 @@ jobs:
       - name: Build Docker Image(s)
         run: |
           docker build . -f Dockerfile.dev -t "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
 
       - name: Register gcloud as a Docker credential helper
         run: |-
@@ -52,7 +52,7 @@ jobs:
           docker push "gcr.io/$PROJECT_ID/$IMAGE:${{ steps.set_image_tag.outputs.image_tag }}"
 
       - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v1
+        uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_DEV }}
           location: ${{ secrets.GKE_ZONE }}
