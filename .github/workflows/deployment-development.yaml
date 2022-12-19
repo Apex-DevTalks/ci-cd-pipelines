@@ -61,7 +61,7 @@ jobs:
           location: ${{ secrets.GKE_ZONE }}
           credentials: ${{ secrets.GKE_SA_KEY }}
 
-      - name: Deploy the Docker image to the GKE clusted
+      - name: Deploy the Docker image to the GKE cluster
         working-directory: ./k8s/ci-cd-pipelines-devtalk/helm
         run: |
           helm upgrade --install --namespace ci-cd-pipelines-development  --create-namespace --wait -f ./values-dev.yaml \
